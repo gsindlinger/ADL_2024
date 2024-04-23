@@ -1,0 +1,91 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage{microtype}
+\usepackage{lmodern}
+\usepackage{mathpazo}
+\usepackage{latexsym}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage[english]{babel}
+\usepackage{float}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage[utf8]{inputenc}
+\usepackage{listings}
+\usepackage{xcolor}
+% use more of the page
+\usepackage[scale=0.8]{geometry}
+% do not move figures across sections
+\usepackage[section]{placeins}
+
+% Sensible defaults for lstlistings
+\lstset{
+  basicstyle=\footnotesize\ttfamily,
+  belowcaptionskip=1\baselineskip,
+  breaklines=true,
+  commentstyle=\bfseries\color{purple!40!black}
+  frame=L,
+  identifierstyle=\color{blue},
+  keywordstyle=\bfseries\color{green!40!black},
+  language=python,
+  showstringspaces=false,
+  stringstyle=\color{orange},
+  xleftmargin=\parindent,
+}
+% prettier links
+\hypersetup{
+colorlinks,
+linkcolor={red!50!black},
+citecolor={blue!50!black},
+urlcolor={blue!80!black}
+}
+\urlstyle{rm}
+
+\begin{document}
+\title{Advanced Deep Learning 2024\\Assignment 1}
+\author{\color{red}Your name}
+\maketitle
+
+\section{Sobel filter}
+\begin{figure}
+  \begin{center}
+%    \includegraphics[width=.75\textwidth]{Assignment1_Question6_Plot1}
+  \end{center}
+  \caption{Every figure and table has a caption and is referred to 
+    in the text body.\label{fig:q6p1}}
+\end{figure}
+
+
+
+You can add code like this
+\begin{lstlisting}
+c = conv(x)
+c = torch.square(c)
+\end{lstlisting}
+
+For combining the filter outputs, you can  use 
+\lstinline{torch.sum}, but you have to set the \lstinline{axis}
+argument properly.
+
+\section{Convolutional neural networks}
+
+no problem if you do or do not see the activation function when you output of the architecture 
+
+
+\subsection{Basic CNN definition}
+\subsection{Activation function before or after pooling?}
+\subsection{Data augmentation}
+\subsection{Batch normalization}
+\subsection{Experimental architecture comparison}
+\section{Fully convolutional neural networks}
+\subsection{Receptive field and double convolution}
+
+
+\begin{center}
+\begin{tabular}{lcccc}
+     &  $d=1$ &  $d=2$ &  $d=3$ & general $d$\\
+ number of trainable parameters   &$n$& $n^2$& $n^3$ & $n^d$\\
+ receptive field size  &$n$& $n^2$& $n^3$ & $n^d$
+\end{tabular}
+    \end{center}
+
+
+\end{document}
