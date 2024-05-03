@@ -1,4 +1,134 @@
 \section{Deep versus wide networks}
+
+\subsection*{Subtask 1}
+
+\footnotesize
+\begin{longtable}{|m{0.5\textwidth}|m{0.43\textwidth}|} \hline
+\textbf{Code Snippet} & \textbf{Description} \\ \hline
+\begin{lstlisting}
+import torch
+import torch.nn as nn
+import torch.utils.data as data
+...
+\end{lstlisting} & Imports of the necessary modules\\ \hline
+\begin{lstlisting}
+print("Using torch", torch.__version__)
+device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+print("Device", device)
+\end{lstlisting} & Figuring out the device in order to be able to later move tensors and models to the respective device as easily as possible and ideally, in the case of a GPU, to achieve faster training and inference times. \\ \hline
+\begin{lstlisting}
+class XORDataset(data.Dataset):
+    def __init__(self, size, std=0.1, device=device):
+        super().__init__()
+        self.size = size
+        self.std = std
+        self.generate_continuous_xor()
+
+    def generate_continuous_xor(self):
+    ...
+\end{lstlisting} & Creation of the XOR data set with the parameters \lstinline|size|(= the number of data to be generated), \lstinline|std| (= the standard deviation of the noise to be added to the data set) and \lstinline|device| (= the device on which the data is to be processed). With \lstinline|torch.randint|, \lstinline|size| 2D data is generated, which can take the values 0 or 1 per component. If the sum of both components of the 2D data equals 0, then this corresponds to a true XOR statement, otherwise not. In addition, normally distributed noise is added with \lstinline|torch.randn|.  \\ \hline
+\begin{lstlisting}
+def visualize_binary_samples(dataset):
+    (data,label) = dataset.toNumpy()
+    data_0 = data[label == 0]
+    data_1 = data[label == 1]
+
+    plt.figure(figsize=(4, 4))
+    ...
+
+dataset = XORDataset(size=200)
+print("Size of dataset:", len(dataset))
+print("Data point 0:", dataset[0])
+visualize_binary_samples(dataset)
+plt.show()
+\end{lstlisting} & Visualisation of 200 XOR data in a 2D representation. The x-axis corresponds to the first component of the data, the y-axis to the second component. The truth content of the XOR statement (or the label of the data) is displayed in two different colours. \\ \hline
+\begin{lstlisting}
+class SimpleClassifier(nn.Module):
+    def __init__(self, src, tg, depth, width, device=device):
+        super().__init__()
+        self.enc_sizes = [src, tg, depth, width]
+        functionLst = [nn.Linear(src, width), nn.Identity()]
+        self.model = nn.Sequential(*functionLst)
+        self.model.to(device)
+
+    def forward(self, x):
+        x = self.model(x)
+        x = x.squeeze(dim=1)
+        return x
+\end{lstlisting} & The model of the neural network, which is created using Pytorch's \lstinline|nn.Module|. An object instance of the SimpleClassifier class is generated via constructor of the variables \lstinline|src, tg, depth, width, device|. The constructor calls the inherited \lstinline|super| constructor and creates a sequential model with a linear layer and the identity as an activation function. Since the XOR problem is not separable and therefore cannot be solved in this linear form, this model would not provide an accurate solution to the classification problem. Therefore, several layers are necessary, as the following subtasks show.
+
+The \lstinline|forward| function performs a pass through the network. Since the network returns a tensor with shape (size(x), 1), the result is flattened to the dimension size(x).\\ \hline
+\begin{lstlisting}
+def train_model(model, optimizer, data_loader, loss_module, num_epochs=100):
+    model.train()
+    for epoch in range(num_epochs):
+        for data_inputs, data_labels in data_loader:
+            preds = model(data_inputs)
+            loss = loss_module(preds, data_labels.float())
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+\end{lstlisting} & This is the main routine to train the model based on the given data (\lstinline|data_loader|), the defined optimizer (\lstinline|optimiser|) and the defined loss (\lstinline|loss_module|). At the beginning, the model is set to the training state, which allows the weights to be adjusted. Subsequently, \lstinline|num_epoch| times of each batch of the \lstinline|data_loader| are passed through the model and then the backpropagation is carried out with the loss and the selected optimizer.\\ \hline
+\begin{lstlisting}
+def eval_model(model, data_loader):
+    model.eval()
+    ...
+    acc = true_preds / num_preds
+    return acc
+\end{lstlisting} & This is the method for evaluating and testing the results of a (trained) model. Based on the test data (ideally unknown for the model), a forward pass is performed by the network. As the outputs of the model specified here do not necessarily yield values between 0 and 1, this evaluation method uses a sigmoid function to map the predictions of the model to values between 0 and 1 and then rounds them to the binary values 0 and 1. These values are then compared with the labels of the data and the number of \lstinline|true_predictions| is counted. The number of true predictions divided by the total number of data in the test data set then provides the accuracy. As the weights of the model should no longer be adjusted in this case and no backward pass is performed, the model is set to \lstinline|eval| and the pass is performed using \lstinline|torch.no_grad()|.\\ \hline
+\begin{lstlisting}
+loss_module = nn.BCEWithLogitsLoss()
+train_dataset = XORDataset(size=1000)
+train_data_loader = data.DataLoader(train_dataset, batch_size=128, shuffle=True)
+test_dataset = XORDataset(size=500)
+test_data_loader = data.DataLoader(test_dataset, batch_size=128, shuffle=False, drop_last=False)
+
+model = SimpleClassifier(src=2, tg=1, depth=0, width=0)
+print(model)
+
+optimizer = torch.optim.SGD(model.parameters(), lr=0.1)
+train_model(model, optimizer, train_data_loader, loss_module, num_epochs=200)
+
+acc = eval_model(model, test_data_loader)
+print(acc)
+\end{lstlisting} & The final script that brings together the various parts of the entire training and evaluation process.
+\begin{enumerate}
+    \item First, the loss is defined, which in this case is a BCEWithLogitsLoss, which stands for Binary Cross Entropy with combined sigmoid application. The sigmoid application ensures that the values of the model are between 0 and 1 and can be compared with the initial binary labels. 
+    \item Two XOR data sets (test and training data) are then generated (see above for details) and prepared for use in the neural network via Pytorch's \lstinline|DataLoader|.
+    \item The model is created with two input nodes and a single output node (no hidden layers). In this model, the \lstinline|depth| and \lstinline|width| do not yet play a role and are therefore initialised with the values 0. These are only used in the following subtasks.
+    \item The optimizer is created as Stochastic Gradient Descent with a learning rate of 0.1.
+    \item The model is trained with the data from the training data set (\lstinline|train_data_loader|), the created model (\lstinline|model|), the optimiser and the defined loss via \lstinline|num_epochs=200|.
+    \item Finally, the accuracy is calculated using the defined \lstinline|eval_model| method.
+\end{enumerate} \\ \hline
+\end{longtable}
+
+\clearpage
+
+\subsection*{Subtask 2}
+
+Below are the two main changes to the given notebook that allow a flexible calculation of the neural network in terms of depth and width:
+
+
+In the definition of the neural network, we use the variables \lstinline|depth| and \lstinline|width| to define the number of hidden layers and the neurons used per hidden layer. For \lstinline|depth| = 0 we have to introduce a special rule, as in this case the network which was already specified in the provided source code is used. 
+If \lstinline|depth| $> 0$, we define the connection between the input layer and the first hidden layer (\lstinline|src|, \lstinline|width|) and the last hidden layer (\lstinline|width|, \lstinline|tg|) and add further hidden layers if necessary. If \lstinline|depth| $> 1$, we define a combination of a linear, fully-connected connection (\lstinline|width|, \lstinline|width|) for each hidden layer. 
+\begin{lstlisting}
+class SimpleClassifier(nn.Module):
+    def __init__(self, src, tg, depth, width, device=device):
+        if depth == 0:
+            functionLst = [nn.Linear(src, tg), nn.Identity()]
+        else:
+            functionLst = [nn.Linear(src, width), nn.Tanh()]
+            for _ in range(depth-1):
+                functionLst.append(nn.Linear(width, width))
+                functionLst.append(nn.Tanh())
+            functionLst.append(nn.Linear(width, tg))
+            functionLst.append(nn.Identity())
+        self.model = nn.Sequential(*functionLst)
+\end{lstlisting}
+
+
+Imports of modules
+
 \begin{figure}
   \begin{center}
 %    \includegraphics[width=.75\textwidth]{Assignment1_Question6_Plot1}
