@@ -3,6 +3,97 @@
 no problem if you do or do not see the activation function when you output of the architecture 
 
 
+\subsection*{1.}
+
+\footnotesize
+\begin{longtable}{|m{0.5\textwidth}|m{0.43\textwidth}|} \hline
+\textbf{Code Snippet} & \textbf{Description} \\ \hline
+\begin{lstlisting}
+import torch
+import torch.nn as nn
+import torch.optim as optim
+...
+\end{lstlisting} & Imports of the necessary modules\\ \hline
+\begin{lstlisting}
+device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
+print('GPU State:', device)
+\end{lstlisting} & Configures the script to use the GPU if it is available, else CPU. In google colaboratory it is set to CPU.\\ \hline
+
+\begin{lstlisting}
+def training_loop(model, loss, optimizer, loader, epochs, verbose=True, device=device):
+    for epoch in range(epochs):
+        running_loss = 0.0
+
+        for times, data in enumerate(loader):
+...
+        outputs = model(inputs)
+        loss_tensor = loss(outputs, labels)
+        loss_tensor.backward()
+        optimizer.step()
+...
+\end{lstlisting} & This defines the main training loop of the network. It iterates over a defined number of epochs, processing batches of data to avoid memory problems. It stores the batches in a defined device, reshapes the input images to a flat vector, performs a forward pass and calculates the loss. It then performs backpropagation to calculate the gradients and adjustes the weights with the defined optimizer. Finally prints the loss for each epoch\\ \hline
+
+\begin{lstlisting}
+def evaluate_model(model, loader, device=device):
+...
+    return (correct, total, class_correct, class_total)
+
+
+\end{lstlisting} & A function to evaluate how well the model performs. The inputs are a trained neural network and the data to evaluate the model on. The function returns the total number of correct guesses, total number of examples, correct guesses for each class and the total number of examples for each class.   \\ \hline
+
+\begin{lstlisting}
+
+transform = transforms.Compose(
+    [transforms.ToTensor(),
+     transforms.Normalize((0.5,), (0.5,)),]
+)
+\end{lstlisting} & This defines some datapreprocessing steps for the data. ToTensor() converts the data into a PyTorch tensor, and scales the values to be between 0 and 1. Normalize((0.5,), (0.5,)) adjusts the mean and standard deviation to the given values which centers the data around 0. This helps the model to converge quicker during training\\ \hline
+
+\begin{lstlisting}
+trainSet = datasets.MNIST(root='MNIST', download=True, train=True, transform=transform)
+testSet = datasets.MNIST(root='MNIST', download=True, train=False, transform=transform)
+trainLoader = dset.DataLoader(trainSet, batch_size=64, shuffle=True)
+testLoader = dset.DataLoader(testSet, batch_size=64, shuffle=False)
+\end{lstlisting} & In this part the MNIST train/test datasets is downloaded and the previously defined datapreprocessing is applied to them. The the datasets are then split into batches with the size of 64 images per batch. \\ \hline
+
+
+\begin{lstlisting}
+class Net(nn.Module):
+    def __init__(self):
+        super(Net, self).__init__()
+        self.main = nn.Sequential(
+            nn.Linear(in_features=784, out_features=128),
+            nn.ReLU(),
+            nn.Linear(in_features=128, out_features=64),
+            nn.ReLU(),
+            nn.Linear(in_features=64, out_features=10),
+            nn.LogSoftmax(dim=1)
+        )
+
+    def forward(self, input):
+        return self.main(input)
+
+
+net = Net().to(device)
+print(net)
+\end{lstlisting} & This part defines a feedforward neural network with 3 hidden linear layers. It uses ReLu as the activation function for the 2 first layers and then a LogSoftmax for the last. 
+\begin{itemize}
+    \item Layer 1: Linear layer with \(784 * 128 + 128 = 100 480\) parameters
+    \item Activation: ReLu (Rectified Linear Unit)
+    \item Layer 2: Linear layer with \(128 * 64 + 64 = 8256\) parameters
+    \item Activation: ReLu (Rectified Linear Unit)
+    \item Layer 3: Linear layer with \(64 * 10 + 10 = 650\)
+    \item Activation: 
+\end{itemize}
+\\ \hline
+
+
+\end{longtable}
+
+
+
+
+
 \subsection{Basic CNN definition}
 \subsection{Activation function before or after pooling?}
 \subsection{Data augmentation}
