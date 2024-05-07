@@ -1,11 +1,11 @@
 # Assignment 1
 
 ## Introduction
-This repository contains a collection of Jupyter notebook files for the purpose of [describe the purpose of your code, e.g., data analysis, machine learning experiments, etc.].
+This folder contains a collection of Jupyter notebook files for the purpose of answering the questions related to assignment 1 of the Advanced Deep Learning class 2024.
 
 ## Requirements
 To run the code in these notebooks, you need the following software installed on your system:
-- Python (version X.X or higher)
+- Python
 - Jupyter Notebook
 
 ## Installation

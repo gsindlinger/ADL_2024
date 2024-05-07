@@ -1,0 +1,7 @@
+ipykernel
+torch 
+matplotlib 
+torchmetrics 
+scikit-image 
+segmentation-models-pytorch
+wandb
