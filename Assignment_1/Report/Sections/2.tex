@@ -1,23 +1,12 @@
 \section{Convolutional neural networks}
 
-no problem if you do or do not see the activation function when you output of the architecture 
+\subsection*{Subtask 1}
 
-
-\subsection*{1.}
+Aside from regulating the imports and setting the device (gpu, cpu) to run the tensor operations on, the notebook has the following components:
 
 \footnotesize
 \begin{longtable}{|m{0.5\textwidth}|m{0.43\textwidth}|} \hline
 \textbf{Code Snippet} & \textbf{Description} \\ \hline
-\begin{lstlisting}
-import torch
-import torch.nn as nn
-import torch.optim as optim
-...
-\end{lstlisting} & Imports of the necessary modules\\ \hline
-\begin{lstlisting}
-device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
-print('GPU State:', device)
-\end{lstlisting} & Configures the script to use the GPU if it is available, else CPU. In google colaboratory it is set to CPU.\\ \hline
 
 \begin{lstlisting}
 def training_loop(model, loss, optimizer, loader, epochs, verbose=True, device=device):
@@ -31,7 +20,7 @@ def training_loop(model, loss, optimizer, loader, epochs, verbose=True, device=d
         loss_tensor.backward()
         optimizer.step()
 ...
-\end{lstlisting} & This defines the main training loop of the network. It iterates over a defined number of epochs, processing batches of data to avoid memory problems. It stores the batches in a defined device, reshapes the input images to a flat vector, performs a forward pass and calculates the loss. It then performs backpropagation to calculate the gradients and adjustes the weights with the defined optimizer. Finally prints the loss for each epoch\\ \hline
+\end{lstlisting} & This defines the main training loop of the network. It iterates over a defined number of epochs, processing batches of data to avoid memory problems. It stores the batches in the previously defined device, reshapes the input images to a flat vector, performs a forward pass and calculates the loss. It then performs backpropagation to calculate the gradients and adjusts the weights with the defined optimizer. Finally, it prints the loss for each epoch.\\ \hline
 
 \begin{lstlisting}
 def evaluate_model(model, loader, device=device):
@@ -47,14 +36,14 @@ transform = transforms.Compose(
     [transforms.ToTensor(),
      transforms.Normalize((0.5,), (0.5,)),]
 )
-\end{lstlisting} & This defines some datapreprocessing steps for the data. ToTensor() converts the data into a PyTorch tensor, and scales the values to be between 0 and 1. Normalize((0.5,), (0.5,)) adjusts the mean and standard deviation to the given values which centers the data around 0. This helps the model to converge quicker during training\\ \hline
+\end{lstlisting} & This defines some data preprocessing steps for the data. ToTensor() converts the data into a PyTorch tensor, and scales the values to be between 0 and 1. Normalize((0.5,), (0.5,)) adjusts the mean and standard deviation to the given values, which centres the data around 0. This might help the model to converge quicker during training.\\ \hline
 
 \begin{lstlisting}
 trainSet = datasets.MNIST(root='MNIST', download=True, train=True, transform=transform)
 testSet = datasets.MNIST(root='MNIST', download=True, train=False, transform=transform)
 trainLoader = dset.DataLoader(trainSet, batch_size=64, shuffle=True)
 testLoader = dset.DataLoader(testSet, batch_size=64, shuffle=False)
-\end{lstlisting} & In this part the MNIST train/test datasets is downloaded and the previously defined datapreprocessing is applied to them. The the datasets are then split into batches with the size of 64 images per batch. \\ \hline
+\end{lstlisting} & In this part, the MNIST train/test datasets are downloaded and the previously defined data preprocessing is applied to them. The datasets are then split into batches with the size of 64 images per batch. \\ \hline
 
 
 \begin{lstlisting}
@@ -78,35 +67,154 @@ net = Net().to(device)
 print(net)
 \end{lstlisting} & This part defines a feedforward neural network with 3 hidden linear layers. It uses ReLu as the activation function for the 2 first layers and then a LogSoftmax for the last. 
 \begin{itemize}
-    \item Layer 1: Linear layer with \(784 * 128 + 128 = 100 480\) parameters
-    \item Activation: ReLu (Rectified Linear Unit)
-    \item Layer 2: Linear layer with \(128 * 64 + 64 = 8256\) parameters
-    \item Activation: ReLu (Rectified Linear Unit)
-    \item Layer 3: Linear layer with \(64 * 10 + 10 = 650\)
-    \item Activation: 
+    \item Layer 1: Linear layer with \(784 \times 128 + 128 = 100,480\) parameters.
+    \item Activation: ReLU (Rectified Linear Unit).
+    \item Layer 2: Linear layer with \(128 \times 64 + 64 = 8,256\) parameters.
+    \item Activation: ReLU (Rectified Linear Unit).
+    \item Layer 3: Linear layer with \(64 \times 10 + 10 = 650\) parameters.
+    \item Activation: LogSoftmax.
 \end{itemize}
+Total number of parameters: \(100,480 + 8,256 + 650 = 109,386\).
+
+\\ \hline
+
+\begin{lstlisting}
+epochs = 4
+lr = 0.002
+loss = nn.NLLLoss()
+optimizer = optim.SGD(net.parameters(), lr=0.002, momentum=0.9)
+
+print('Training on %d images' % trainSet.data.shape[0])
+training_loop(net, loss, optimizer, trainLoader, epochs)
+print('Training Finished.\n')
+
+correct, total, class_correct, class_total = evaluate_model(net, testLoader)
+print('Accuracy of the network on the %d test images: %d %%' % (testSet.data.shape[0], (100*correct / total)))
+for i in range(10):
+    print('Accuracy of %d: %3f' % (i, (class_correct[i]/class_total[i])))
+\end{lstlisting} & In this part, the network is trained and evaluated based on a set of different training parameters; epochs, learning rate, loss and optimization algorithm.
+\begin{itemize}
+    \item Epochs being the amount of times to iterate over the entire dataset, in this case 4.
+    \item The learning rate determines the step size while moving toward a minimum of the loss function, in this case 0.002.
+    \item The loss being the desired way to calculate the error at each iteration, in this case NLLL (Negative Log Likelihood Loss).
+    \item The Optimizer being the desired way to find the local minima of the cost function. The network is then trained and evaluated.
+\end{itemize}  
+
+
+
 \\ \hline
 
 
 \end{longtable}
+\normalsize
+
+\subsubsection*{Network Accuracy on Test Images}
+
+The evaluation described in the last row of the previous table provides the following results:
+
+\begin{itemize}
+\item Accuracy of the network on the 10000 test images: 96 %
+\item Accuracy of 0: 98.3\%
+\item Accuracy of 1: 98.8\%
+\item Accuracy of 2: 96.6\%
+\item Accuracy of 3: 94.8\%
+\item Accuracy of 4: 96.2\%
+\item Accuracy of 5: 94.3\%
+\item Accuracy of 6: 96.1\%
+\item Accuracy of 7: 94.7\%
+\item Accuracy of 8: 96.5\%
+\item Accuracy of 9: 94.5\%
+\end{itemize}
+
+\subsection*{Subtask 2}
+For this part, the feedforward neural network was replaced with the provided Convolutional Neural Network. The network consists of two convolutional layers, ReLU activation layers, two max pooling layers, one flattening layer before the fully connected layer, and a LogSoftMax activation layer. \textbf{The purpose of the flattening layer is to transform the 3D outputs of the convolutional layers into a 1D vector} (for further details, see below), because the Linear layer requires a 1D vector as input.
+
+\begin{lstlisting}
+class Net(nn.Module):
+    def __init__(self):
+        super(Net, self).__init__()
+        self.main = nn.Sequential(
+            nn.Conv2d(1, 16, kernel_size=(3, 3), stride=(1, 1)),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False),
+            nn.Conv2d(16, 32, kernel_size=(3, 3), stride=(1, 1)),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False),
+            nn.Flatten(start_dim=1, end_dim=-1),
+            nn.Linear(in_features=800, out_features=10, bias=True),
+            nn.LogSoftmax(dim=1)
+        )
+
+    def forward(self, input):
+        return self.main(input)
+\end{lstlisting}
 
 
 
+\subsubsection*{2.2.1 Linear layer input features calculation}
+
+\textbf{Output of the first convolutional layer:} 
+The output size for each side of a square input is given by:
+\[ \text{Output size} = \text{Input size} - (\text{Filter size} - 1) \]
+Using an input size of 28 and a filter size of 3:
+\[ \text{Output} = 28 - (3 - 1) = 26 \]
+So, the output dimensions are \(26 \times 26\) for each of the 16 feature maps.
+
+\textbf{Output of the first max pooling layer:} 
+The pooling layer with a 2x2 kernel halves the dimensions:
+\[ \text{Output} = \frac{26}{2} = 13 \]
+Thus, the output dimensions are \(13 \times 13\) for each feature map.
+
+\textbf{Output of the second convolutional layer:} 
+Applying the same formula with an input size of 13:
+\[ \text{Output} = 13 - (3 - 1) = 11 \]
+This results in \(11 \times 11\) dimensions for each of the 32 feature maps.
+
+\textbf{Output of the second max pooling layer:} 
+Again, using a 2x2 kernel:
+\[ \text{Output} = \frac{11}{2} = 5.5 \approx 5 \] (typically rounding down)
+The dimensions are \(5 \times 5\) for each feature map.
+
+\textbf{Flattening layer output:} 
+This layer converts the \(5 \times 5 \times 32\) feature maps into a single 1D vector of length:
+\[ 5 \times 5 \times 32 = 800 \]
+
+Therefore, the input to the linear layer consists of 800 features.
+
+\subsubsection*{2.2.2 Number of parameters}
+To calculate the number of parameters in the network, we have to only consider the layers which have trainable weights. The layers in question are the convolutional layers and the fully connected linear layer. 
 
 
-\subsection{Basic CNN definition}
-\subsection{Activation function before or after pooling?}
-\subsection{Data augmentation}
-\subsection{Batch normalization}
-\subsection{Experimental architecture comparison}
-\section{Fully convolutional neural networks}
-\subsection{Receptive field and double convolution}
+\textbf{Parameters in a single convolutional layer} = (input channels $\times$ filter height $\times$ filter width + 1) $\times$ output channels
+
+\textbf{First Convolutional layer } \((1 \times 3 \times 3 + 1) \times 16 = 160 \text{ parameters}\)
+\newline
+\\
+\textbf{Second Convolutional layer } \((16 \times 3 \times 3 + 1) \times 32 = 4640 \text{ parameters}\)
+\newline
+\\
+\textbf{Fully Connected layer} \((800 \times 10 + 10) = 8010 \text{ parameters}\)
+\\
+\\
+\textbf{Total Number of Parameters:} \(160 + 4640 + 8010 = 12,810\)
 
 
-\begin{center}
-\begin{tabular}{lcccc}
-     &  $d=1$ &  $d=2$ &  $d=3$ & general $d$\\
- number of trainable parameters   &$n$& $n^2$& $n^3$ & $n^d$\\
- receptive field size  &$n$& $n^2$& $n^3$ & $n^d$
-\end{tabular}
-    \end{center}
+\subsubsection*{2.2.3 CNN Evaluation}
+
+\begin{itemize}
+\item Accuracy of the network on the 10000 test images: 97 %
+\item Accuracy of 0: 99.4\%
+\item Accuracy of 1: 99.7\%
+\item Accuracy of 2: 98.3\%
+\item Accuracy of 3: 97.9\%
+\item Accuracy of 4: 98.8\%
+\item Accuracy of 5: 98.5\%
+\item Accuracy of 6: 96.8\%
+\item Accuracy of 7: 96.4\%
+\item Accuracy of 8: 96.7\%
+\item Accuracy of 9: 96.6\%
+\end{itemize}
+
+In conclusion, the CNN performs slightly better than the feedforward network achieving a 98\% accuracy (96\% for the feedforward network). Bemerkenswert ist jedoch die Anzahl der Parameter, die beim CNN nearly 100,000 geringer ausfällt. 
+
+\normalsize
